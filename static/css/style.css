@@ -17,6 +17,7 @@
   --accent-green:  #68d391;
 
   --hk-color:      #f6ad55;
+  --hk_lotto-color: var(--accent-red);
   --sgp-color:     #68d391;
   --sdy-color:     #b794f4;
 
@@ -190,6 +191,7 @@ body {
   position: absolute; top: 0; left: 0; right: 0; height: 2px;
 }
 .stat-card.hk::before { background: var(--hk-color); }
+.stat-card.hk_lotto::before { background: var(--hk_lotto-color); }
 .stat-card.sgp::before { background: var(--sgp-color); }
 .stat-card.sdy::before { background: var(--sdy-color); }
 .stat-card.blue::before { background: var(--accent-blue); }
@@ -198,6 +200,7 @@ body {
 .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 500; letter-spacing: 0.5px; }
 .stat-value { font-size: 26px; font-weight: 800; margin: 6px 0 4px; font-family: 'JetBrains Mono'; }
 .stat-value.hk { color: var(--hk-color); }
+.stat-value.hk_lotto { color: var(--hk_lotto-color); }
 .stat-value.sgp { color: var(--sgp-color); }
 .stat-value.sdy { color: var(--sdy-color); }
 .stat-meta { font-size: 11px; color: var(--text-muted); }
@@ -241,6 +244,7 @@ tbody td.mono { font-family: 'JetBrains Mono'; font-size: 13px; }
   letter-spacing: 0.5px;
 }
 .badge-hk { background: rgba(246,173,85,0.15); color: var(--hk-color); border: 1px solid rgba(246,173,85,0.3); }
+.badge-hk_lotto { background: rgba(252,129,129,0.15); color: var(--hk_lotto-color); border: 1px solid rgba(252,129,129,0.3); }
 .badge-sgp { background: rgba(104,211,145,0.15); color: var(--sgp-color); border: 1px solid rgba(104,211,145,0.3); }
 .badge-sdy { background: rgba(183,148,244,0.15); color: var(--sdy-color); border: 1px solid rgba(183,148,244,0.3); }
 .badge-success { background: rgba(104,211,145,0.15); color: var(--accent-green); border: 1px solid rgba(104,211,145,0.3); }
@@ -327,6 +331,7 @@ select.form-control option { background: var(--bg-secondary); }
   box-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 .tab-btn.hk.active { color: var(--hk-color); }
+.tab-btn.hk_lotto.active { color: var(--hk_lotto-color); }
 .tab-btn.sgp.active { color: var(--sgp-color); }
 .tab-btn.sdy.active { color: var(--sdy-color); }
 
@@ -342,6 +347,7 @@ select.form-control option { background: var(--bg-secondary); }
   transition: width 0.5s ease;
 }
 .progress-fill.hk { background: var(--hk-color); }
+.progress-fill.hk_lotto { background: var(--hk_lotto-color); }
 .progress-fill.sgp { background: var(--sgp-color); }
 .progress-fill.sdy { background: var(--sdy-color); }
 .progress-fill.blue { background: var(--accent-blue); }
@@ -366,6 +372,7 @@ select.form-control option { background: var(--bg-secondary); }
   transition: var(--transition);
 }
 .digit-box.hk { border-color: rgba(246,173,85,0.4); color: var(--hk-color); }
+.digit-box.hk_lotto { border-color: rgba(252,129,129,0.4); color: var(--hk_lotto-color); }
 .digit-box.sgp { border-color: rgba(104,211,145,0.4); color: var(--sgp-color); }
 .digit-box.sdy { border-color: rgba(183,148,244,0.4); color: var(--sdy-color); }
 

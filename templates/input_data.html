@@ -32,22 +32,21 @@
         </div>
       </div>
 
-      <div class="grid-3" style="margin-top:4px;">
+      <div class="grid-4" style="margin-top:4px; display: grid; grid-template-columns: repeat({{ categories|length }}, 1fr); gap: 20px;">
+        {% for kat in categories %}
         <div class="form-group">
-          <label class="form-label" for="nilai_HK" style="color:var(--hk-color)">🟡 HK (4D)</label>
-          <input type="text" id="nilai_HK" name="nilai_HK" class="form-control mono"
-                 maxlength="4" pattern="\d{4}" placeholder="0000">
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="nilai_SGP" style="color:var(--sgp-color)">🟢 SGP (4D)</label>
-          <input type="text" id="nilai_SGP" name="nilai_SGP" class="form-control mono"
+          <label class="form-label" for="nilai_{{ kat }}" style="color:var(--{{ kat.lower() }}-color)">
+            {% if kat == 'HK' %}🟡 HK
+            {% elif kat == 'HK_LOTTO' %}🔴 HK LOTTO
+            {% elif kat == 'SGP' %}🟢 SGP
+            {% elif kat == 'SDY' %}🟣 SDY
+            {% else %}⚪ {{ kat.replace('_', ' ') }}
+            {% endif %} (4D)
+          </label>
+          <input type="text" id="nilai_{{ kat }}" name="nilai_{{ kat }}" class="form-control mono"
                  maxlength="4" pattern="\d{4}" placeholder="—">
         </div>
-        <div class="form-group">
-          <label class="form-label" for="nilai_SDY" style="color:var(--sdy-color)">🟣 SDY (4D)</label>
-          <input type="text" id="nilai_SDY" name="nilai_SDY" class="form-control mono"
-                 maxlength="4" pattern="\d{4}" placeholder="0000">
-        </div>
+        {% endfor %}
       </div>
 
       <div style="font-size:11px; color:var(--text-muted); margin-bottom:14px;">
@@ -66,6 +65,7 @@
       <div class="card-title">ℹ️ Info Keluaran</div>
       <div style="font-size:13px; color:var(--text-secondary); line-height:1.8;">
         <div>🟡 <strong style="color:var(--hk-color)">HK</strong> — Setiap hari (Senin–Minggu)</div>
+        <div>🔴 <strong style="color:var(--hk_lotto-color)">HK LOTTO</strong> — Setiap hari (Senin–Minggu)</div>
         <div>🟢 <strong style="color:var(--sgp-color)">SGP</strong> — Rabu, Sabtu, Minggu, Senin</div>
         <div>🟣 <strong style="color:var(--sdy-color)">SDY</strong> — Setiap hari (Senin–Minggu)</div>
       </div>
@@ -87,9 +87,9 @@
         <tr>
           <th>Tanggal</th>
           <th>Hari</th>
-          <th><span class="badge badge-hk">HK</span></th>
-          <th><span class="badge badge-sgp">SGP</span></th>
-          <th><span class="badge badge-sdy">SDY</span></th>
+          {% for kat in categories %}
+          <th><span class="badge badge-{{ kat.lower() }}">{{ kat.replace('_', ' ') }}</span></th>
+          {% endfor %}
         </tr>
       </thead>
       <tbody>
@@ -97,21 +97,13 @@
         <tr>
           <td class="mono">{{ row.tanggal }}</td>
           <td>{{ row.hari or '—' }}</td>
+          {% for kat in categories %}
           <td>
-            {% if row.HK is defined and row.HK %}
-            <span class="font-mono" style="color:var(--hk-color);font-weight:700;">{{ row.HK }}</span>
+            {% if row[kat] is defined and row[kat] %}
+            <span class="font-mono" style="color:var(--{{ kat.lower() }}-color);font-weight:700;">{{ row[kat] }}</span>
             {% else %}<span class="text-muted">—</span>{% endif %}
           </td>
-          <td>
-            {% if row.SGP is defined and row.SGP %}
-            <span class="font-mono" style="color:var(--sgp-color);font-weight:700;">{{ row.SGP }}</span>
-            {% else %}<span class="text-muted">—</span>{% endif %}
-          </td>
-          <td>
-            {% if row.SDY is defined and row.SDY %}
-            <span class="font-mono" style="color:var(--sdy-color);font-weight:700;">{{ row.SDY }}</span>
-            {% else %}<span class="text-muted">—</span>{% endif %}
-          </td>
+          {% endfor %}
         </tr>
         {% endfor %}
       </tbody>

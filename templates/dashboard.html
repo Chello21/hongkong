@@ -69,23 +69,26 @@
   </div>
 
   <!-- Susun per tanggal -->
-  {% set seen = namespace(dates=[]) %}
   <div class="table-wrapper">
     <table>
       <thead>
         <tr>
           <th>Tanggal</th>
           <th>Hari</th>
-          <th><span class="badge badge-hk">HK</span></th>
-          <th><span class="badge badge-sgp">SGP</span></th>
-          <th><span class="badge badge-sdy">SDY</span></th>
+          {% for kat in categories %}
+          <th><span class="badge badge-{{ kat.lower() }}">{{ kat.replace('_', ' ') }}</span></th>
+          {% endfor %}
         </tr>
       </thead>
       <tbody>
         {% set grouped = {} %}
         {% for row in data_terbaru %}
           {% if row.tanggal not in grouped %}
-            {% set _ = grouped.update({row.tanggal: {'hari': row.hari, 'HK': '-', 'SGP': '-', 'SDY': '-'}}) %}
+            {% set info_init = {'hari': row.hari} %}
+            {% for kat in categories %}
+              {% set _ = info_init.update({kat: '-'}) %}
+            {% endfor %}
+            {% set _ = grouped.update({row.tanggal: info_init}) %}
           {% endif %}
           {% set _ = grouped[row.tanggal].update({row.kategori: row.nilai}) %}
         {% endfor %}
@@ -94,21 +97,13 @@
         <tr>
           <td class="mono">{{ tgl }}</td>
           <td>{{ info.hari }}</td>
+          {% for kat in categories %}
           <td>
-            {% if info.HK != '-' %}
-            <span class="font-mono" style="color:var(--hk-color); font-weight:700;">{{ info.HK }}</span>
+            {% if info[kat] != '-' %}
+            <span class="font-mono" style="color:var(--{{ kat.lower() }}-color); font-weight:700;">{{ info[kat] }}</span>
             {% else %}<span class="text-muted">—</span>{% endif %}
           </td>
-          <td>
-            {% if info.SGP != '-' %}
-            <span class="font-mono" style="color:var(--sgp-color); font-weight:700;">{{ info.SGP }}</span>
-            {% else %}<span class="text-muted">—</span>{% endif %}
-          </td>
-          <td>
-            {% if info.SDY != '-' %}
-            <span class="font-mono" style="color:var(--sdy-color); font-weight:700;">{{ info.SDY }}</span>
-            {% else %}<span class="text-muted">—</span>{% endif %}
-          </td>
+          {% endfor %}
         </tr>
         {% endfor %}
       </tbody>

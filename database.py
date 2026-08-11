@@ -40,6 +40,40 @@ SEED_DATA = [
     ("2026-08-10", "Senin",   "7604", "3525", "0332"),
 ]
 
+SEED_DATA_HK_LOTTO = [
+    # tanggal       hari      nilai
+    ("2026-07-12", "Minggu", "4733"),
+    ("2026-07-13", "Senin",  "0267"),
+    ("2026-07-14", "Selasa", "3684"),
+    ("2026-07-15", "Rabu",   "3156"),
+    ("2026-07-16", "Kamis",  "9010"),
+    ("2026-07-17", "Jumat",  "0614"),
+    ("2026-07-18", "Sabtu",  "1165"),
+    ("2026-07-19", "Minggu", "7344"),
+    ("2026-07-20", "Senin",  "4957"),
+    ("2026-07-21", "Selasa", "8568"),
+    ("2026-07-22", "Rabu",   "6880"),
+    ("2026-07-23", "Kamis",  "1545"),
+    ("2026-07-24", "Jumat",  "1869"),
+    ("2026-07-25", "Sabtu",  "6465"),
+    ("2026-07-26", "Minggu", "0037"),
+    ("2026-07-27", "Senin",  "4937"),
+    ("2026-07-28", "Selasa", "7437"),
+    ("2026-07-29", "Rabu",   "3930"),
+    ("2026-07-30", "Kamis",  "9237"),
+    ("2026-07-31", "Jumat",  "2535"),
+    ("2026-08-01", "Sabtu",  "8446"),
+    ("2026-08-02", "Minggu", "0570"),
+    ("2026-08-03", "Senin",  "4885"),
+    ("2026-08-04", "Selasa", "8824"),
+    ("2026-08-05", "Rabu",   "1739"),
+    ("2026-08-06", "Kamis",  "1083"),
+    ("2026-08-07", "Jumat",  "6011"),
+    ("2026-08-08", "Sabtu",  "5917"),
+    ("2026-08-09", "Minggu", "3752"),
+    ("2026-08-10", "Senin",  "2983"),
+]
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS data_historis (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -112,6 +146,16 @@ def init_db():
                 )
             except Exception:
                 pass
+    # Seed data HK Lotto
+    for row in SEED_DATA_HK_LOTTO:
+        tanggal, hari, nilai = row
+        try:
+            conn.execute(
+                "INSERT OR IGNORE INTO data_historis (tanggal, hari, kategori, nilai) VALUES (?,?,'HK_LOTTO',?)",
+                (tanggal, hari, nilai),
+            )
+        except Exception:
+            pass
     conn.commit()
     conn.close()
     print("[DB] Database initialized & seed data loaded.")

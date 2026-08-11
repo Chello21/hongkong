@@ -14,7 +14,7 @@ def index():
     # Data terbaru (10 baris per kategori untuk tabel dashboard)
     conn = get_conn()
     data_terbaru = conn.execute(
-        "SELECT * FROM data_historis ORDER BY tanggal DESC, kategori ASC LIMIT 30"
+        "SELECT * FROM data_historis ORDER BY tanggal DESC, kategori ASC LIMIT 40"
     ).fetchall()
     total_uji = conn.execute("SELECT COUNT(*) as c FROM uji_keacakan").fetchone()["c"]
     total_analisis = conn.execute("SELECT COUNT(*) as c FROM hasil_analisis").fetchone()["c"]
