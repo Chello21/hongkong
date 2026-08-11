@@ -78,6 +78,7 @@
           {% for kat in categories %}
           <th><span class="badge badge-{{ kat.lower() }}">{{ kat.replace('_', ' ') }}</span></th>
           {% endfor %}
+          <th style="text-align:right;">Aksi</th>
         </tr>
       </thead>
       <tbody>
@@ -104,10 +105,74 @@
             {% else %}<span class="text-muted">—</span>{% endif %}
           </td>
           {% endfor %}
+          <td style="text-align:right;">
+            <!-- Tombol Edit yg trigger Modal -->
+            <button class="btn btn-ghost btn-sm" onclick='openEditModal("{{ tgl }}", "{{ info.hari }}", {{ info | tojson }})'>
+              ✏️ Edit
+            </button>
+          </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+<!-- Modal Edit Dashboard -->
+<div id="editModal" class="modal-overlay">
+  <div class="modal-content card">
+    <div class="flex items-center justify-between mb-16">
+      <h3 class="card-title mb-0" style="color:var(--text-primary); font-size:16px;">Edit Data Keluaran</h3>
+      <button class="btn btn-ghost btn-sm" style="padding:4px 8px;" onclick="closeEditModal()">✕</button>
+    </div>
+    
+    <form action="{{ url_for('dashboard.edit') }}" method="POST">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Tanggal</label>
+          <input type="date" name="tanggal" id="editTanggal" class="form-control" required readonly style="opacity: 0.7; cursor: not-allowed;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hari</label>
+          <input type="text" name="hari" id="editHari" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="grid-3 mt-16" style="margin-bottom:24px;">
+        {% for kat in categories %}
+        <div class="form-group mb-0">
+          <label class="form-label" style="color:var(--{{ kat.lower() }}-color);">{{ kat.replace('_', ' ') }}</label>
+          <input type="text" name="nilai_{{ kat }}" id="edit_{{ kat }}" class="form-control mono" maxlength="4" placeholder="0000">
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="flex justify-between items-center" style="border-top:1px solid var(--border); padding-top:16px;">
+        <span class="text-sm text-muted">Data akan otomatis dianalisis setelah disimpan.</span>
+        <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function openEditModal(tanggal, hari, info) {
+    document.getElementById('editModal').classList.add('active');
+    document.getElementById('editTanggal').value = tanggal;
+    document.getElementById('editHari').value = hari;
+    
+    // Set values based on categories
+    {% for kat in categories %}
+    if (info["{{ kat }}"] && info["{{ kat }}"] !== '-') {
+        document.getElementById('edit_{{ kat }}').value = info["{{ kat }}"];
+    } else {
+        document.getElementById('edit_{{ kat }}').value = "";
+    }
+    {% endfor %}
+}
+
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+}
+</script>
 {% endblock %}

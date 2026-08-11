@@ -60,12 +60,18 @@ def generate_ranking(kategori: str, metode: str = "weighted", top_n: int = 10):
     """
     Generate ranking nomor 4D berdasarkan kombinasi skor digit terbaik.
     Strategi: ambil digit teratas per posisi, kombinasikan, hitung skor gabungan.
+    Filter: nomor yang sudah pernah keluar sebelumnya tidak akan dimasukkan ke dalam prediksi.
 
     Returns:
         list of (nomor_4d, skor_gabungan) diurutkan descending
     """
     skor = hitung_skor_digit(kategori, metode)
     posisi_order = ["ribuan", "ratusan", "puluhan", "satuan"]
+    
+    # Ambil data historis untuk memfilter nomor yang sudah keluar
+    from modules.preprocessing import get_data_by_category
+    drawn_data = get_data_by_category(kategori)
+    drawn_numbers = {nilai for _, nilai in drawn_data if len(nilai) == 4}
 
     # Ambil top-5 digit per posisi
     top_per_posisi = {}
@@ -80,6 +86,9 @@ def generate_ranking(kategori: str, metode: str = "weighted", top_n: int = 10):
             for p, sp in top_per_posisi["puluhan"]:
                 for s, ss in top_per_posisi["satuan"]:
                     nomor = r + ra + p + s
+                    # FILTER: Lewati jika nomor sudah pernah keluar
+                    if nomor in drawn_numbers:
+                        continue
                     skor_total = (sr + sra + sp + ss) / 4
                     kombinasi.append((nomor, round(skor_total, 6)))
 
