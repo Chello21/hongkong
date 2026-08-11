@@ -1,0 +1,466 @@
+{% extends "base.html" %}
+{% block title %}Hasil Analisis{% endblock %}
+{% block topbar_title %}Hasil Analisis & Ranking Probabilitas{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Hasil Analisis & Prediksi</h1>
+  <p>Analisis statistik mendalam, distribusi ganjil/genap, dan prediksi model gabungan</p>
+</div>
+
+<div class="disclaimer-banner">
+  ⚠️ <strong>Disclaimer:</strong> Skor dan prediksi ini bersifat deskriptif berbasis data historis untuk keperluan pembelajaran statistik, bukan jaminan atau panduan untuk hasil aktual.
+</div>
+
+<!-- Tab Filter Utama (Kategori & Metode) -->
+<div class="flex items-center justify-between mb-24" style="flex-wrap:wrap; gap:16px;">
+  <div class="flex items-center gap-16" style="flex-wrap:wrap;">
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600;">KATEGORI</div>
+      <div class="tab-group">
+        {% for kat in categories %}
+        <a href="?kat={{ kat }}&metode={{ metode }}&tab={{ tab }}" style="text-decoration:none;">
+          <button class="tab-btn {{ kat.lower() }} {% if kategori == kat %}active{% endif %}">{{ kat }}</button>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+    
+    <div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600;">METODE UTAMA</div>
+      <div class="tab-group">
+        <a href="?kat={{ kategori }}&metode=weighted&tab={{ tab }}" style="text-decoration:none;">
+          <button class="tab-btn {% if metode == 'weighted' %}active{% endif %}">⚖️ Weighted</button>
+        </a>
+        <a href="?kat={{ kategori }}&metode=simple&tab={{ tab }}" style="text-decoration:none;">
+          <button class="tab-btn {% if metode == 'simple' %}active{% endif %}">📊 Simple</button>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sub Tabs Analisis -->
+  <div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:6px;font-weight:600;text-align:right;">PILIH ANALISIS</div>
+    <div class="tab-group">
+      <a href="?kat={{ kategori }}&metode={{ metode }}&tab=ranking" style="text-decoration:none;">
+        <button class="tab-btn {% if tab == 'ranking' or not tab %}active{% endif %}">🏆 Ranking & Distribusi</button>
+      </a>
+      <a href="?kat={{ kategori }}&metode={{ metode }}&tab=ganjilgenap" style="text-decoration:none;">
+        <button class="tab-btn {% if tab == 'ganjilgenap' %}active{% endif %}">⚖️ Ganjil / Genap</button>
+      </a>
+      <a href="?kat={{ kategori }}&metode={{ metode }}&tab=prediksi" style="text-decoration:none;">
+        <button class="tab-btn {% if tab == 'prediksi' %}active{% endif %}">🔮 Prediksi Gabungan</button>
+      </a>
+    </div>
+  </div>
+</div>
+
+<!-- Keterangan Metode Aktif (Hanya tampil di tab ranking/prediksi) -->
+{% if tab != 'ganjilgenap' %}
+  {% if metode == 'weighted' %}
+  <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(99,179,237,0.06);border:1px solid rgba(99,179,237,0.2);border-radius:10px;padding:14px 18px;margin-bottom:24px;">
+    <div style="font-size:22px;flex-shrink:0;">⚖️</div>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--accent-blue);margin-bottom:4px;">Metode Weighted (Bobot Eksponensial)</div>
+      <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.7;">
+        Data keluaran <strong>terbaru diberi bobot lebih besar</strong> menggunakan rumus peluruhan eksponensial <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent-blue);">bobot = 0.9^(N-1-i)</span>. Cocok untuk analisis tren jangka pendek.
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div style="display:flex;gap:12px;align-items:flex-start;background:rgba(104,211,145,0.06);border:1px solid rgba(104,211,145,0.2);border-radius:10px;padding:14px 18px;margin-bottom:24px;">
+    <div style="font-size:22px;flex-shrink:0;">📊</div>
+    <div>
+      <div style="font-size:13px;font-weight:700;color:var(--accent-green);margin-bottom:4px;">Metode Simple (Frekuensi Relatif)</div>
+      <div style="font-size:12.5px;color:var(--text-secondary);line-height:1.7;">
+        Semua data historis diperlakukan <strong>setara tanpa memandang urutan waktu</strong> dengan rumus <span style="font-family:'JetBrains Mono';font-size:12px;color:var(--accent-green);">skor = jumlah_muncul / total_data</span>. Cocok untuk analisis pola jangka panjang.
+      </div>
+    </div>
+  </div>
+  {% endif %}
+{% endif %}
+
+
+<!-- ════════ TAB 1: RANKING & DISTRIBUSI ════════ -->
+{% if tab == 'ranking' or not tab %}
+<div class="grid-2" style="align-items:start;">
+  <!-- Ranking List -->
+  <div class="card">
+    <div class="card-title">🏆 Top 20 Nomor — <span class="badge badge-{{ kategori.lower() }}">{{ kategori }}</span></div>
+    <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:12px;line-height:1.6;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border-left:3px solid var(--{{ kategori.lower() }}-color);">
+      Ranking kombinasi digit terbaik di setiap posisi berdasarkan metode <strong>{{ metode|capitalize }}</strong>.
+    </div>
+    
+    {% if ranking %}
+    <div style="max-height:550px; overflow-y:auto; padding-right:4px;">
+      {% for nomor, skor in ranking %}
+      {% set pct = (skor * 100)|round(2) %}
+      <div class="ranking-item">
+        <div class="rank-num {% if loop.index <= 3 %}top3{% endif %}">{{ loop.index }}</div>
+        <div class="rank-nomor" style="color:var(--{{ kategori.lower() }}-color);">{{ nomor }}</div>
+        <div style="flex:1;">
+          <div class="progress-bar">
+            <div class="progress-fill {{ kategori.lower() }}" style="width:{{ [pct * 40, 100]|min }}%;"></div>
+          </div>
+        </div>
+        <div class="rank-skor">{{ pct }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-muted">Belum ada data untuk kategori ini.</p>
+    {% endif %}
+  </div>
+
+  <!-- Distribusi & Digit Terbaik -->
+  <div>
+    <div class="card mb-16">
+      <div class="card-title">📊 Distribusi Digit per Posisi</div>
+      <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:10px;">
+        Jumlah kemunculan tiap digit (0–9) di posisi tertentu. Gunakan tombol di bawah chart untuk berpindah posisi.
+      </div>
+      <canvas id="chartDigit" height="200"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎯 Skor Digit Tertinggi per Posisi</div>
+      {% set posisi_order = ['ribuan', 'ratusan', 'puluhan', 'satuan'] %}
+      {% for pos in posisi_order %}
+      {% if skor_digit[pos] is defined %}
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--text-muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;">{{ pos }}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          {% set sorted_digits = skor_digit[pos].items()|list|sort(attribute=1, reverse=True) %}
+          {% for digit, skor_val in sorted_digits[:5] %}
+          <div style="text-align:center;">
+            <div class="digit-box {{ kategori.lower() }}">{{ digit }}</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:3px;">{{ (skor_val*100)|round(1) }}%</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- ════════ TAB 2: GANJIL / GENAP ════════ -->
+{% if tab == 'ganjilgenap' %}
+<!-- Summary Cards -->
+<div class="stats-grid mb-24">
+  <div class="stat-card blue">
+    <div class="stat-label">DOMINASI DATA HISTORIS</div>
+    <div class="stat-value" style="text-transform: capitalize; color:var(--accent-blue);">{{ gg.keseluruhan.dominan }}</div>
+    <div class="stat-meta">Ganjil: {{ gg.keseluruhan.pct_ganjil }}% | Genap: {{ gg.keseluruhan.pct_genap }}%</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-label">TREN 10 KELUARAN TERAKHIR</div>
+    <div class="stat-value" style="text-transform: capitalize; color:var(--accent-purple);">{{ gg.tren_10.dominan }}</div>
+    <div class="stat-meta">Ganjil: {{ gg.tren_10.pct_ganjil }}% | Genap: {{ gg.tren_10.pct_genap }}%</div>
+  </div>
+  <div class="stat-card {{ kategori.lower() }}">
+    <div class="stat-label">TOTAL DATA ANALISIS</div>
+    <div class="stat-value {{ kategori.lower() }}">{{ gg.detail_terakhir|length }}</div>
+    <div class="stat-meta">Keluaran terakhir digunakan</div>
+  </div>
+</div>
+
+<div class="grid-2 mb-24" style="align-items:start;">
+  <!-- Detail per Posisi -->
+  <div class="card">
+    <div class="card-title">⚖️ Analisis Ganjil/Genap per Posisi Digit</div>
+    <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:16px;">
+      Breakdown persentase digit ganjil dan genap berdasarkan posisi ribuan, ratusan, puluhan, dan satuan.
+    </div>
+    
+    {% set posisi_order = ['ribuan', 'ratusan', 'puluhan', 'satuan'] %}
+    {% for pos in posisi_order %}
+    {% set p_data = gg.per_posisi[pos] %}
+    <div style="margin-bottom:18px; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.03);">
+      <div class="flex justify-between items-center" style="margin-bottom:6px;">
+        <span style="font-weight:600; text-transform:uppercase; font-size:12px; color:var(--text-secondary);">{{ pos }}</span>
+        <span class="badge {% if p_data.dominan == 'ganjil' %}badge-hk{% else %}badge-sgp{% endif %}">
+          Dominan: {{ p_data.dominan }}
+        </span>
+      </div>
+      
+      <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); margin-bottom:4px;">
+        <span>Ganjil: {{ p_data.ganjil }} kali ({{ p_data.pct_ganjil }}%)</span>
+        <span>Genap: {{ p_data.genap }} kali ({{ p_data.pct_genap }}%)</span>
+      </div>
+      
+      <div class="progress-bar" style="height:8px; display:flex;">
+        <div class="progress-fill hk" style="width:{{ p_data.pct_ganjil }}%; border-radius: 999px 0 0 999px;" title="Ganjil"></div>
+        <div class="progress-fill sgp" style="width:{{ p_data.pct_genap }}%; border-radius: 0 999px 999px 0;" title="Genap"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Chart Ganjil/Genap -->
+  <div class="card">
+    <div class="card-title">📊 Perbandingan Frekuensi Ganjil vs Genap</div>
+    <canvas id="chartGanjilGenap" height="240"></canvas>
+  </div>
+</div>
+
+<!-- Tabel Tren Terkini -->
+<div class="card">
+  <div class="card-title">📋 10 Keluaran Terakhir & Pola Ganjil/Genap</div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Nomor Keluaran</th>
+          <th>Struktur Posisi (R-R-P-S)</th>
+          <th>Hasil Nomor</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in gg.detail_terakhir %}
+        <tr>
+          <td class="mono">{{ row.tanggal }}</td>
+          <td>
+            {% for d in row.nilai %}
+            <span class="digit-box {{ kategori.lower() }}" style="width:30px;height:36px;font-size:16px;">{{ d }}</span>
+            {% endfor %}
+          </td>
+          <td class="mono">
+            {% for d in row.nilai %}
+              {% if d|int % 2 == 1 %}
+              <span style="color:var(--hk-color); font-weight:700;">Ganjil</span>
+              {% else %}
+              <span style="color:var(--sgp-color); font-weight:700;">Genap</span>
+              {% endif %}
+              {% if not loop.last %} - {% endif %}
+            {% endfor %}
+          </td>
+          <td>
+            {% if row.label == 'ganjil' %}
+            <span class="badge badge-hk">GANJIL</span>
+            {% else %}
+            <span class="badge badge-sgp">GENAP</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- ════════ TAB 3: PREDIKSI GABUNGAN ════════ -->
+{% if tab == 'prediksi' %}
+<div class="grid-2" style="align-items:start;">
+  <!-- Panel Prediksi Utama -->
+  <div class="card" style="border:1px solid rgba(183,148,244,0.3); box-shadow:0 0 25px rgba(183,148,244,0.08);">
+    <div class="card-title" style="color:var(--accent-purple); font-weight:700;">🔮 Rekomendasi Nomor Final</div>
+    
+    <div style="text-align:center; padding:24px 0 16px;">
+      <div style="font-size:11.5px; color:var(--text-muted); margin-bottom:14px; text-transform:uppercase; letter-spacing:1px;">
+        Kombinasi Algoritma Model Gabungan
+      </div>
+      <div style="margin-bottom:20px;">
+        {% for d in prediksi.nomor_prediksi %}
+        <span class="digit-box {{ kategori.lower() }}" style="width:60px; height:75px; font-size:36px; line-height:75px; border-radius:10px;">{{ d }}</span>
+        {% endfor %}
+      </div>
+      
+      <div style="max-width:320px; margin: 0 auto 10px;">
+        <div class="flex justify-between items-center" style="font-size:12.5px; margin-bottom:6px;">
+          <span style="color:var(--text-secondary);">Tingkat Keyakinan (Confidence)</span>
+          <span style="font-weight:700; color:var(--accent-purple);">{{ prediksi.confidence }}%</span>
+        </div>
+        <div class="progress-bar" style="height:8px;">
+          <div class="progress-fill purple" style="width:{{ prediksi.confidence }}%;"></div>
+        </div>
+      </div>
+      
+      <div style="font-size:11px; color:var(--text-muted); margin-top:8px;">
+        Disepakati oleh {{ prediksi.konsensus_total }} dari 4 posisi digit secara konsensus mutlak.
+      </div>
+    </div>
+
+    <!-- Skor Model Individu -->
+    <div style="border-top:1px solid var(--border); padding-top:20px; margin-top:10px;">
+      <div style="font-size:12px; font-weight:600; color:var(--text-secondary); margin-bottom:12px;">SKOR ALGORITMA INDIVIDU</div>
+      
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; text-align:center;">
+        <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid var(--border);">
+          <div style="font-size:10px; color:var(--text-muted);">Weighted</div>
+          <div style="font-size:16px; font-weight:700; color:var(--accent-blue); margin-top:4px;">{{ prediksi.skor_model.weighted }}%</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid var(--border);">
+          <div style="font-size:10px; color:var(--text-muted);">Simple</div>
+          <div style="font-size:16px; font-weight:700; color:var(--accent-green); margin-top:4px;">{{ prediksi.skor_model.simple }}%</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; border:1px solid var(--border);">
+          <div style="font-size:10px; color:var(--text-muted);">Ganjil/Genap</div>
+          <div style="font-size:16px; font-weight:700; color:var(--accent-gold); margin-top:4px;">{{ prediksi.skor_model.ganjil_genap }}%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Detail Voting dan Konsensus -->
+  <div class="card">
+    <div class="card-title">🗳️ Detail Voting Algoritma Per Posisi</div>
+    <div style="font-size:11.5px;color:var(--text-muted);margin-bottom:16px;">
+      Bagaimana ketiga model memberikan "suara" (vote) digit terbaik pada setiap posisi.
+    </div>
+
+    {% set posisi_order = ['ribuan', 'ratusan', 'puluhan', 'satuan'] %}
+    {% for pos in posisi_order %}
+    {% set p_detail = prediksi.detail_per_posisi[pos] %}
+    <div style="margin-bottom:16px; padding:12px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:8px;">
+      <div class="flex justify-between items-center" style="margin-bottom:10px;">
+        <span style="font-weight:700; text-transform:uppercase; font-size:12px; color:var(--accent-blue);">{{ pos }}</span>
+        {% if p_detail.konsensus %}
+        <span class="badge badge-success">🤝 Konsensus Mutlak (3/3)</span>
+        {% else %}
+        <span class="badge badge-warning">⚖️ Voting Mayoritas (2/3)</span>
+        {% endif %}
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:8px;">
+        <div style="font-size:11px; color:var(--text-muted);">
+          ⚖️ Weighted: <strong style="color:var(--text-primary);">{{ p_detail.votes.weighted.digit }}</strong> <span style="font-size:9.5px;">({{ p_detail.votes.weighted.skor }}%)</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted);">
+          📊 Simple: <strong style="color:var(--text-primary);">{{ p_detail.votes.simple.digit }}</strong> <span style="font-size:9.5px;">({{ p_detail.votes.simple.skor }}%)</span>
+        </div>
+        <div style="font-size:11px; color:var(--text-muted);">
+          ⚙️ G/G Model: <strong style="color:var(--text-primary);">{{ p_detail.votes.ganjil_genap.digit }}</strong> <span style="font-size:9.5px;">({{ p_detail.votes.ganjil_genap.skor }}%)</span>
+        </div>
+      </div>
+
+      <div style="font-size:12px; color:var(--text-secondary); padding-top:6px; border-top:1px dashed rgba(255,255,255,0.05);">
+        Digit Pemenang: <strong style="color:var(--{{ kategori.lower() }}-color); font-size:13px;">{{ p_detail.digit_terpilih }}</strong>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const kat = "{{ kategori }}";
+const katColors = { HK: '#f6ad55', SGP: '#68d391', SDY: '#b794f4' };
+const color = katColors[kat] || '#63b3ed';
+
+// ─── SCRIPT UNTUK TAB RANKING ───
+{% if tab == 'ranking' or not tab %}
+const chartData = {{ chart_data|safe }};
+const posisiOrder = ['ribuan', 'ratusan', 'puluhan', 'satuan'];
+let currentPos = 'ribuan';
+
+function buildChart(pos) {
+  const d = chartData[pos];
+  if (!d) return;
+  const ctx = document.getElementById('chartDigit').getContext('2d');
+  if (window._digitChart) window._digitChart.destroy();
+  window._digitChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [{
+        label: `Frekuensi Digit (${pos})`,
+        data: d.values,
+        backgroundColor: color + '55',
+        borderColor: color,
+        borderWidth: 2,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => ` Frekuensi: ${ctx.raw} kali`
+          }
+        }
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// Build posisi tabs di bawah title
+const posContainer = document.querySelector('.card:has(#chartDigit) .card-title');
+const tabs = document.createElement('div');
+tabs.style.cssText = 'display:flex;gap:6px;margin-top:8px;margin-bottom:12px;';
+posisiOrder.forEach(pos => {
+  const btn = document.createElement('button');
+  btn.className = 'btn btn-ghost btn-sm';
+  btn.textContent = pos.charAt(0).toUpperCase() + pos.slice(1);
+  btn.style.fontSize = '11px';
+  btn.onclick = () => {
+    currentPos = pos;
+    buildChart(pos);
+    tabs.querySelectorAll('button').forEach(b => b.style.borderColor = '');
+    btn.style.borderColor = color;
+  };
+  tabs.appendChild(btn);
+});
+posContainer.after(tabs);
+tabs.firstChild.style.borderColor = color;
+
+buildChart('ribuan');
+{% endif %}
+
+// ─── SCRIPT UNTUK TAB GANJIL GENAP ───
+{% if tab == 'ganjilgenap' %}
+const ggChartData = {{ gg_chart|safe }};
+const ctxGG = document.getElementById('chartGanjilGenap').getContext('2d');
+new Chart(ctxGG, {
+  type: 'bar',
+  data: {
+    labels: ggChartData.labels,
+    datasets: [
+      {
+        label: 'Ganjil',
+        data: ggChartData.ganjil,
+        backgroundColor: '#f6ad5588',
+        borderColor: '#f6ad55',
+        borderWidth: 2,
+        borderRadius: 4
+      },
+      {
+        label: 'Genap',
+        data: ggChartData.genap,
+        backgroundColor: '#68d39188',
+        borderColor: '#68d391',
+        borderWidth: 2,
+        borderRadius: 4
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom' }
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.06)' } },
+      x: { grid: { display: false } }
+    }
+  }
+});
+{% endif %}
+</script>
+{% endblock %}

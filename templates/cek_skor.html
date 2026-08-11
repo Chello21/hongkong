@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}Cek Skor Nomor{% endblock %}
+{% block topbar_title %}Cek Skor Probabilitas Nomor{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Cek Skor Nomor</h1>
+  <p>Masukkan nomor 4D untuk melihat skor probabilitas berbasis data historis</p>
+</div>
+
+<div class="disclaimer-banner">
+  ⚠️ Skor ini dihitung berdasarkan frekuensi historis digit per posisi dan bukan prediksi atau jaminan apapun.
+</div>
+
+<div class="grid-2" style="align-items:start;">
+
+  <!-- Form Cek -->
+  <div class="card">
+    <div class="card-title">🔍 Masukkan Nomor 4D</div>
+    <form method="POST">
+      <div class="form-group">
+        <label class="form-label">Nomor (4 digit)</label>
+        <input type="text" name="nomor" class="form-control mono"
+               maxlength="4" pattern="\d{4}" placeholder="_ _ _ _"
+               value="{{ nomor_input }}" required
+               style="font-size:36px; letter-spacing:12px; height:70px;">
+      </div>
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">Kategori</label>
+          <select name="kategori" class="form-control">
+            {% for kat in categories %}
+            <option value="{{ kat }}" {% if kategori == kat %}selected{% endif %}>{{ kat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Metode Perhitungan</label>
+          <select name="metode" class="form-control" id="metodeSelect" onchange="updateMetodeInfo()">
+            <option value="weighted" {% if metode == 'weighted' %}selected{% endif %}>⚖️ Weighted — Data terbaru lebih berbobot</option>
+            <option value="simple" {% if metode == 'simple' %}selected{% endif %}>📊 Simple — Semua data bobotnya sama</option>
+          </select>
+          <div id="metodeInfo" style="margin-top:8px;font-size:11.5px;line-height:1.6;padding:8px 12px;border-radius:8px;"></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full" style="margin-top:8px;">
+        🔍 Cek Skor
+      </button>
+    </form>
+
+    <!-- Hasil Cek -->
+    {% if hasil_cek %}
+    <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">
+      {% if hasil_cek.error is defined %}
+      <div class="flash error">❌ {{ hasil_cek.error }}</div>
+      {% else %}
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:12px;color:var(--text-muted);margin-bottom:8px;">NOMOR</div>
+        <div>
+          {% for d in hasil_cek.nomor %}
+          <span class="digit-box {{ hasil_cek.kategori.lower() }}">{{ d }}</span>
+          {% endfor %}
+        </div>
+        <div style="margin-top:16px;">
+          <div style="font-size:12px;color:var(--text-muted);">SKOR GABUNGAN</div>
+          <div style="font-size:40px;font-family:'JetBrains Mono';font-weight:800;
+                      color:var(--{{ hasil_cek.kategori.lower() }}-color);">
+            {{ hasil_cek.persentase_gabungan }}
+          </div>
+          <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+            Rata-rata skor 4 posisi digit (ribuan + ratusan + puluhan + satuan) ÷ 4
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail per posisi -->
+      {% for item in hasil_cek.detail %}
+      <div style="margin-bottom:12px;">
+        <div class="flex items-center justify-between" style="margin-bottom:5px;">
+          <div style="font-size:12px;color:var(--text-muted);">
+            {{ item.posisi }} — Digit <strong style="color:var(--text-primary);">{{ item.digit }}</strong>
+          </div>
+          <div style="font-size:12px;font-weight:600;">{{ item.persentase }}</div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill {{ hasil_cek.kategori.lower() }}"
+               style="width:{{ [item.skor * 1000, 100]|min }}%;"></div>
+        </div>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Rekomendasi Top -->
+  <div class="card">
+    <div class="card-title">
+      🏆 Top Rekomendasi — <span class="badge badge-{{ kategori.lower() }}">{{ kategori }}</span>
+    </div>
+    {% if ranking %}
+    {% for nomor, skor in ranking %}
+    <div class="ranking-item">
+      <div class="rank-num {% if loop.index <= 3 %}top3{% endif %}">{{ loop.index }}</div>
+      <div class="rank-nomor" style="color:var(--{{ kategori.lower() }}-color);">
+        {% for d in nomor %}<span class="digit-box {{ kategori.lower() }}" style="width:34px;height:40px;font-size:18px;">{{ d }}</span>{% endfor %}
+      </div>
+      <div class="rank-skor">{{ (skor*100)|round(2) }}%</div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <p class="text-muted">Belum ada data.</p>
+    {% endif %}
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">SWITCH KATEGORI</div>
+      <div class="tab-group">
+        {% for kat in categories %}
+        <a href="?kat={{ kat }}&metode={{ metode }}" style="text-decoration:none;">
+          <button class="tab-btn {{ kat.lower() }} {% if kategori == kat %}active{% endif %}">{{ kat }}</button>
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const metodeDesc = {
+  weighted: {
+    color: 'rgba(99,179,237,0.12)',
+    border: 'rgba(99,179,237,0.25)',
+    text: '⚖️ <strong style="color:#63b3ed;">Weighted:</strong> Data terbaru diberi bobot lebih besar menggunakan rumus <span style="font-family:\'JetBrains Mono\';font-size:11px;color:#63b3ed;">bobot = 0.9^(N-1-i)</span>. Cocok untuk menangkap tren jangka pendek.'
+  },
+  simple: {
+    color: 'rgba(104,211,145,0.12)',
+    border: 'rgba(104,211,145,0.25)',
+    text: '📊 <strong style="color:#68d391;">Simple:</strong> Semua data historis diperlakukan setara. Skor dihitung dengan rumus <span style="font-family:\'JetBrains Mono\';font-size:11px;color:#68d391;">skor = jumlah_muncul / total_data</span>. Cocok untuk analisis pola keseluruhan.'
+  }
+};
+
+function updateMetodeInfo() {
+  const sel = document.getElementById('metodeSelect');
+  const box = document.getElementById('metodeInfo');
+  const m = metodeDesc[sel.value];
+  if (!m || !box) return;
+  box.style.background = m.color;
+  box.style.border = '1px solid ' + m.border;
+  box.style.color = '#a0aec0';
+  box.innerHTML = m.text;
+}
+
+// Jalankan saat halaman load
+updateMetodeInfo();
+</script>
+{% endblock %}

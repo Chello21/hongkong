@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block topbar_title %}Dashboard Ringkasan{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Dashboard</h1>
+  <p>Ringkasan data historis HK · SGP · SDY dan status analisis terkini</p>
+</div>
+
+<!-- Stat Cards: Total Data per Kategori -->
+<div class="stats-grid mb-24">
+  {% for kat in categories %}
+  {% set r = ringkasan[kat] %}
+  {% set cls = kat.lower() %}
+  <div class="stat-card {{ cls }}">
+    <div class="stat-label">TOTAL DATA {{ kat }}</div>
+    <div class="stat-value {{ cls }}">{{ r.total_data if r else 0 }}</div>
+    <div class="stat-meta">
+      {% if r %}{{ r.tanggal_awal }} – {{ r.tanggal_akhir }}{% else %}Belum ada data{% endif %}
+    </div>
+  </div>
+  {% endfor %}
+  <div class="stat-card blue">
+    <div class="stat-label">UJI KEACAKAN</div>
+    <div class="stat-value" style="color:var(--accent-blue)">{{ total_uji }}</div>
+    <div class="stat-meta">Total pengujian Chi²</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-label">HASIL ANALISIS</div>
+    <div class="stat-value" style="color:var(--accent-purple)">{{ total_analisis }}</div>
+    <div class="stat-meta">Ranking tersimpan</div>
+  </div>
+</div>
+
+<!-- Ringkasan Statistik per Kategori -->
+<div class="grid-3 mb-24">
+  {% for kat in categories %}
+  {% set r = ringkasan[kat] %}
+  {% set cls = kat.lower() %}
+  <div class="card">
+    <div class="card-title">
+      <span class="badge badge-{{ cls }}">{{ kat }}</span>
+      Statistik Deskriptif
+    </div>
+    {% if r %}
+    <table style="font-size:13px;">
+      <tr><td class="text-muted" style="padding:5px 0;padding-right:16px;">Rata-rata</td>
+          <td class="font-mono">{{ r.rata_rata }}</td></tr>
+      <tr><td class="text-muted" style="padding:5px 0;padding-right:16px;">Std. Deviasi</td>
+          <td class="font-mono">{{ r.std_dev }}</td></tr>
+      <tr><td class="text-muted" style="padding:5px 0;padding-right:16px;">Min</td>
+          <td class="font-mono">{{ "%04d"|format(r.min) }}</td></tr>
+      <tr><td class="text-muted" style="padding:5px 0;padding-right:16px;">Max</td>
+          <td class="font-mono">{{ "%04d"|format(r.max) }}</td></tr>
+    </table>
+    {% else %}
+    <p class="text-muted text-sm">Belum ada data.</p>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Tabel Data Terbaru -->
+<div class="card">
+  <div class="flex items-center justify-between mb-16">
+    <div class="card-title mb-0">Data Keluaran Terbaru</div>
+    <a href="{{ url_for('input_data.index') }}" class="btn btn-ghost btn-sm">Lihat Semua →</a>
+  </div>
+
+  <!-- Susun per tanggal -->
+  {% set seen = namespace(dates=[]) %}
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Hari</th>
+          <th><span class="badge badge-hk">HK</span></th>
+          <th><span class="badge badge-sgp">SGP</span></th>
+          <th><span class="badge badge-sdy">SDY</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set grouped = {} %}
+        {% for row in data_terbaru %}
+          {% if row.tanggal not in grouped %}
+            {% set _ = grouped.update({row.tanggal: {'hari': row.hari, 'HK': '-', 'SGP': '-', 'SDY': '-'}}) %}
+          {% endif %}
+          {% set _ = grouped[row.tanggal].update({row.kategori: row.nilai}) %}
+        {% endfor %}
+
+        {% for tgl, info in grouped.items() %}
+        <tr>
+          <td class="mono">{{ tgl }}</td>
+          <td>{{ info.hari }}</td>
+          <td>
+            {% if info.HK != '-' %}
+            <span class="font-mono" style="color:var(--hk-color); font-weight:700;">{{ info.HK }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if info.SGP != '-' %}
+            <span class="font-mono" style="color:var(--sgp-color); font-weight:700;">{{ info.SGP }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if info.SDY != '-' %}
+            <span class="font-mono" style="color:var(--sdy-color); font-weight:700;">{{ info.SDY }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

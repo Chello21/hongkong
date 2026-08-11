@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}Input Data{% endblock %}
+{% block topbar_title %}Manajemen Data Historis{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Input Data Historis</h1>
+  <p>Tambah atau lihat data keluaran nomor HK · SGP · SDY</p>
+</div>
+
+<div class="grid-2 mb-24" style="align-items:start;">
+
+  <!-- Form tambah data -->
+  <div class="card">
+    <div class="card-title">➕ Tambah Data Baru</div>
+    <form method="POST" action="{{ url_for('input_data.tambah') }}">
+
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label" for="tanggal">Tanggal</label>
+          <input type="date" id="tanggal" name="tanggal" class="form-control" required
+                 value="{{ ''|default('') }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="hari">Hari</label>
+          <select id="hari" name="hari" class="form-control">
+            <option value="">— pilih hari —</option>
+            {% for h in ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'] %}
+            <option value="{{ h }}">{{ h }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-3" style="margin-top:4px;">
+        <div class="form-group">
+          <label class="form-label" for="nilai_HK" style="color:var(--hk-color)">🟡 HK (4D)</label>
+          <input type="text" id="nilai_HK" name="nilai_HK" class="form-control mono"
+                 maxlength="4" pattern="\d{4}" placeholder="0000">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="nilai_SGP" style="color:var(--sgp-color)">🟢 SGP (4D)</label>
+          <input type="text" id="nilai_SGP" name="nilai_SGP" class="form-control mono"
+                 maxlength="4" pattern="\d{4}" placeholder="—">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="nilai_SDY" style="color:var(--sdy-color)">🟣 SDY (4D)</label>
+          <input type="text" id="nilai_SDY" name="nilai_SDY" class="form-control mono"
+                 maxlength="4" pattern="\d{4}" placeholder="0000">
+        </div>
+      </div>
+
+      <div style="font-size:11px; color:var(--text-muted); margin-bottom:14px;">
+        💡 Kosongkan kolom SGP jika hari Selasa / Kamis / Jumat (tidak ada keluaran)
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full">
+        ✅ Simpan & Analisis Otomatis
+      </button>
+    </form>
+  </div>
+
+  <!-- Info panel -->
+  <div>
+    <div class="card" style="margin-bottom:16px;">
+      <div class="card-title">ℹ️ Info Keluaran</div>
+      <div style="font-size:13px; color:var(--text-secondary); line-height:1.8;">
+        <div>🟡 <strong style="color:var(--hk-color)">HK</strong> — Setiap hari (Senin–Minggu)</div>
+        <div>🟢 <strong style="color:var(--sgp-color)">SGP</strong> — Rabu, Sabtu, Minggu, Senin</div>
+        <div>🟣 <strong style="color:var(--sdy-color)">SDY</strong> — Setiap hari (Senin–Minggu)</div>
+      </div>
+    </div>
+    <div class="disclaimer-banner">
+      ⚠️ Setiap kali data baru disimpan, sistem akan otomatis menjalankan Uji Chi-square dan memperbarui Ranking Probabilitas.
+    </div>
+  </div>
+</div>
+
+<!-- Tabel data historis lengkap -->
+<div class="card">
+  <div class="flex items-center justify-between mb-16">
+    <div class="card-title mb-0">📋 Riwayat Data Lengkap ({{ table_rows|length }} tanggal)</div>
+  </div>
+  <div class="table-wrapper">
+    <table>
+      <thead>
+        <tr>
+          <th>Tanggal</th>
+          <th>Hari</th>
+          <th><span class="badge badge-hk">HK</span></th>
+          <th><span class="badge badge-sgp">SGP</span></th>
+          <th><span class="badge badge-sdy">SDY</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in table_rows %}
+        <tr>
+          <td class="mono">{{ row.tanggal }}</td>
+          <td>{{ row.hari or '—' }}</td>
+          <td>
+            {% if row.HK is defined and row.HK %}
+            <span class="font-mono" style="color:var(--hk-color);font-weight:700;">{{ row.HK }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if row.SGP is defined and row.SGP %}
+            <span class="font-mono" style="color:var(--sgp-color);font-weight:700;">{{ row.SGP }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if row.SDY is defined and row.SDY %}
+            <span class="font-mono" style="color:var(--sdy-color);font-weight:700;">{{ row.SDY }}</span>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Auto-fill hari from tanggal
+  document.getElementById('tanggal').addEventListener('change', function() {
+    const days = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+    const d = new Date(this.value + 'T00:00:00');
+    const hariSel = document.getElementById('hari');
+    const hariName = days[d.getDay()];
+    for (let opt of hariSel.options) {
+      if (opt.value === hariName) { hariSel.value = hariName; break; }
+    }
+  });
+</script>
+{% endblock %}

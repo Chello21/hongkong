@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Sistem Analisis Pola dan Uji Keacakan Deret Nomor HK SGP SDY berbasis statistik Chi-square">
+  <title>{% block title %}NumAnalytica{% endblock %} — Sistem Analisis Nomor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ══ SIDEBAR OVERLAY FOR MOBILE ══ -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- ══ SIDEBAR ══ -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">📊</div>
+    <div class="logo-text">
+      NumAnalytica
+      <span>v1.0 · HK / SGP / SDY</span>
+    </div>
+  </div>
+
+  <div class="nav-section">Navigasi</div>
+
+  <a href="{{ url_for('dashboard.index') }}"
+     class="nav-link {% if request.endpoint and 'dashboard' in request.endpoint %}active{% endif %}">
+    <span class="nav-icon">🏠</span> Dashboard
+  </a>
+
+  <a href="{{ url_for('input_data.index') }}"
+     class="nav-link {% if request.endpoint and 'input_data' in request.endpoint %}active{% endif %}">
+    <span class="nav-icon">➕</span> Input Data
+  </a>
+
+  <div class="nav-section" style="margin-top:12px;">Analisis</div>
+
+  <a href="{{ url_for('hasil_analisis.index') }}"
+     class="nav-link {% if request.endpoint and 'hasil_analisis' in request.endpoint %}active{% endif %}">
+    <span class="nav-icon">🏆</span> Hasil Analisis
+  </a>
+
+  <a href="{{ url_for('uji_keacakan.index') }}"
+     class="nav-link {% if request.endpoint and 'uji_keacakan' in request.endpoint %}active{% endif %}">
+    <span class="nav-icon">🎲</span> Uji Keacakan
+  </a>
+
+  <a href="{{ url_for('cek_skor.index') }}"
+     class="nav-link {% if request.endpoint and 'cek_skor' in request.endpoint %}active{% endif %}">
+    <span class="nav-icon">🔍</span> Cek Skor Nomor
+  </a>
+
+  <div class="sidebar-footer">
+    <div class="disclaimer">
+      ⚠️ Hasil analisis bersifat deskriptif statistik. Bukan jaminan atau prediksi hasil aktual.
+    </div>
+  </div>
+</aside>
+
+<!-- ══ MAIN CONTENT ══ -->
+<div class="main-content">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="flex items-center">
+      <button class="sidebar-toggle" id="sidebar-toggle">☰</button>
+      <div class="topbar-title">{% block topbar_title %}Sistem Analisis Nomor{% endblock %}</div>
+    </div>
+    <div class="flex items-center gap-12">
+      <span class="live-dot"></span>
+      <span class="topbar-meta" id="live-clock"></span>
+    </div>
+  </header>
+
+
+  <!-- Flash messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container" style="padding-top:16px;">
+      {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">
+        {% if cat == 'success' %}✅{% else %}❌{% endif %} {{ msg }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Page content -->
+  <div class="page-body animate-in">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+
+<script>
+  // Live clock
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('live-clock').textContent =
+      now.toLocaleDateString('id-ID', {weekday:'short', day:'2-digit', month:'short', year:'numeric'})
+      + ' · ' + now.toLocaleTimeString('id-ID');
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Chart.js defaults
+  Chart.defaults.color = '#a0aec0';
+  Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
+  Chart.defaults.font.family = "'Inter', sans-serif";
+
+  // Responsive Sidebar Toggle
+  const toggleBtn = document.getElementById('sidebar-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+
+  if (toggleBtn && sidebar && overlay) {
+    toggleBtn.addEventListener('click', () => {
+      sidebar.classList.toggle('active');
+      overlay.classList.toggle('active');
+    });
+
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('active');
+      overlay.classList.remove('active');
+    });
+  }
+</script>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
